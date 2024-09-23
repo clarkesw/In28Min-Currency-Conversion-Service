@@ -2,8 +2,9 @@ package com.clarke.service.controller;
 
 
 import com.clarke.service.beans.CurrencyConversion;
+import com.clarke.service.proxy.ExchangeProxy;
 import java.math.BigDecimal;
-import java.util.HashMap;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +15,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 public class CurrencyController {
+    
+    @Autowired
+    ExchangeProxy proxy;
     
     @GetMapping("/currency-conversion/from/{startCurrency}/to/{endCurrency}/quantity/{quantity}")
     public CurrencyConversion calcCurrencyConversion(
@@ -36,8 +40,21 @@ public class CurrencyController {
         return new CurrencyConversion(body.getId(), startCurrency, endCurrency, quantity,
                     body.getConversionMultiple(), 
                     quantity.multiply(body.getConversionMultiple()), 
-                    body.getEnvironment());
+                    body.getEnvironment() + " rest");
     }
+    
+    @GetMapping("/currency-conversion-feign/from/{startCurrency}/to/{endCurrency}/quantity/{quantity}")
+    public CurrencyConversion calcCurrencyConversionFeign(
+                @PathVariable String startCurrency, 
+                @PathVariable String endCurrency,
+                @PathVariable BigDecimal quantity){
+
+        CurrencyConversion body = proxy.getConversionInfo(startCurrency, endCurrency);
+        return new CurrencyConversion(body.getId(), startCurrency, endCurrency, quantity,
+                    body.getConversionMultiple(), 
+                    quantity.multiply(body.getConversionMultiple()), 
+                    body.getEnvironment() + " feign");
+    }    
 }
 
 // http://localhost:8100/currency-conversion/from/USD/to/INR/quantity/10
